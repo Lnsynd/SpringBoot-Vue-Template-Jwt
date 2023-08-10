@@ -1,1 +1,10 @@
-
+spring:
+  security:
+    jwt:
+      key: lqs
+      expire: 7
+  datasource:
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/my-project
