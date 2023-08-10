@@ -40,6 +40,7 @@ public class SecurityConfiguration {
 
     @Resource
     AccountService accountService;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
@@ -88,11 +89,11 @@ public class SecurityConfiguration {
         User user = (User) authentication.getPrincipal();
         Account account = accountService.findAccountByUsernameOrEmail(user.getUsername());
         String token = jwtUtils.createJwt(user, account.getId(), account.getUsername());
-        AuthorizeVo authorizeVo = new AuthorizeVo();
-        authorizeVo.setUsername(account.getUsername());
-        authorizeVo.setRole(account.getRole());
-        authorizeVo.setToken(token);
-        authorizeVo.setExpire(jwtUtils.expireTime());
+        AuthorizeVo authorizeVo = account.asViewObject(AuthorizeVo.class, v -> {
+            v.setToken(token);
+            v.setExpire(jwtUtils.expireTime());
+        });
+
         response.getWriter().write(RestBean.success(authorizeVo).asJsonString());
     }
 
@@ -111,10 +112,10 @@ public class SecurityConfiguration {
         response.setContentType("application/json;charset=utf-8");
         PrintWriter writer = response.getWriter();
         String authorization = request.getHeader("Authorization");
-        if(jwtUtils.invalidateJwt(authorization)){
+        if (jwtUtils.invalidateJwt(authorization)) {
             writer.write(RestBean.success().asJsonString());
-        }else{
-            writer.write(RestBean.failure(400,"退出登录失败").asJsonString());
+        } else {
+            writer.write(RestBean.failure(400, "退出登录失败").asJsonString());
         }
     }
 
