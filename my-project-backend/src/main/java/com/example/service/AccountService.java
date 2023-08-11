@@ -10,4 +10,9 @@ import org.springframework.security.core.userdetails.UserDetailsService;
  */
 public interface AccountService extends IService<Account>, UserDetailsService {
     Account findAccountByUsernameOrEmail(String text);
+
+    /**
+     * 发送邮箱验证码
+     */
+    String registerEmailVerifyCode(String type,String email,String ip);
 }
