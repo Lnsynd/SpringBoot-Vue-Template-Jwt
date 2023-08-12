@@ -2,6 +2,7 @@
 import {reactive, ref} from "vue";
 import {User, Lock} from '@element-plus/icons-vue';
 import {login} from "@/net";
+import router from "@/router";
 
 const formRef = ref()
 
@@ -22,11 +23,10 @@ const rule = {
 
 
 function userLogin() {
-  console.log("login")
 formRef.value.validate((valid)=>{
   if(valid){
     login(form.username,form.password,form.remember,()=>{
-
+      router.push('/index')
     })
   }
 })
@@ -77,7 +77,7 @@ formRef.value.validate((valid)=>{
         <span style="font-size: 14px;color: gray">没有账号?</span>
       </el-divider>
       <div>
-        <el-button style="width: 270px;" type="warning" plain>
+        <el-button style="width: 270px;" type="warning" plain @click="router.push('/register')">
           立即注册
         </el-button>
       </div>
