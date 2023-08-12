@@ -1,7 +1,9 @@
 package com.example.service.impl;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.example.entity.dto.Account;
+import com.example.entity.vo.request.EmailRegisterVo;
 import com.example.mapper.AccountMapper;
 import com.example.service.AccountService;
 import com.example.utils.Const;
@@ -14,8 +16,10 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
@@ -59,7 +63,7 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
 
     @Override
     public String registerEmailVerifyCode(String type, String email, String ip) {
-        synchronized (ip.intern()){
+        synchronized (ip.intern()) {
             if (!this.verifyLimit(ip)) {
                 return "请求频繁，请稍后再试";
             }
@@ -76,5 +80,37 @@ public class AccountServiceImpl extends ServiceImpl<AccountMapper, Account> impl
     private boolean verifyLimit(String ip) {
         String key = Const.VERIFY_EMAIL_LIMIT + ip;
         return flowUtils.limitOnceCheck(key, 60);
+    }
+
+    @Resource
+    PasswordEncoder encoder;
+
+    @Override
+    public String registerEmailAccount(EmailRegisterVo emailRegisterVo) {
+        String email = emailRegisterVo.getEmail();
+        String username = emailRegisterVo.getUsername();
+        String code = stringRedisTemplate.opsForValue().get(Const.VERIFY_EMAIL_DATA + email);
+        String key = Const.VERIFY_EMAIL_DATA + email;
+        if (code == null) return "请获取验证码";
+        if (!code.equals(emailRegisterVo.getCode())) return "验证码输入错误，请重新输入";
+        if (this.isExistAccountByEmail(email)) return "此电子邮件已被其他用户注册";
+        if (this.isExistAccountByUsername(username)) return "此用户名已被其他用户注册";
+        String password = encoder.encode(emailRegisterVo.getPassword());
+        Account account = new Account(null, username, password, email, "user", new Date());
+        if (this.save(account)) {
+            stringRedisTemplate.delete(key);
+            return null;
+        } else {
+            return "内部错误，请联系管理员";
+        }
+
+    }
+
+    private boolean isExistAccountByEmail(String email) {
+        return this.baseMapper.exists(Wrappers.<Account>query().eq("email", email));
+    }
+
+    private boolean isExistAccountByUsername(String username) {
+        return this.baseMapper.exists(Wrappers.<Account>query().eq("username", username));
     }
 }
