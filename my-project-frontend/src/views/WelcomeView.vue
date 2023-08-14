@@ -33,6 +33,6 @@
 .right-card{
   width: 400px;
   z-index: 1;
-  background-color: #ffffff;
+  background-color: var(--el-bg-color);
 }
 </style>
