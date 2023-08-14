@@ -45,7 +45,7 @@ public class SecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(conf -> conf
-                        .requestMatchers("/api/auth/**","/error").permitAll()
+                        .requestMatchers("/api/auth/**","/error","/api/test/**").permitAll()
                         .anyRequest().authenticated())
                 .formLogin(conf -> conf
                         .loginProcessingUrl("/api/auth/login")
@@ -102,7 +102,7 @@ public class SecurityConfiguration {
      */
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) throws IOException, ServletException {
         response.setContentType("application/json;charset=utf-8");
-        response.getWriter().write(RestBean.failure(401, exception.getMessage()).asJsonString());
+        response.getWriter().write(RestBean.unauthorized(exception.getMessage()).asJsonString());
     }
 
     /**
