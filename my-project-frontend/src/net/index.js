@@ -31,7 +31,7 @@ function internalGet(url, header, success, failure, error = defaultError) {
             if (data.code === 200) {
                 success(data.data)
             } else {
-                failure(data.message, data.code, url)
+                failure(data.msg, data.code, url)
             }
         }).catch(err => error(err))
 }
