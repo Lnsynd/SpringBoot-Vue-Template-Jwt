@@ -9,9 +9,10 @@ import org.hibernate.validator.constraints.Length;
  * Created by 刘千山 on 2023/8/11/011-17:16
  */
 @Data
-public class EmailRegisterVo {
+public class EmailRegisterVO {
+
     @Email
-            @Length(min=7)
+    @Length(min = 7)
     String email;
 
     @Length(max = 6, min = 6)

@@ -27,14 +27,16 @@ public class MailQueueListener {
 
     @RabbitHandler
     public void sendMailMessage(Map<String, Object> data) {
-        String email = (String) data.get("email");
+        String email = data.get("email").toString();
         Integer code = (Integer) data.get("code");
-        String type = (String) data.get("type");
+        String type = data.get("type").toString();
         SimpleMailMessage message = switch (type) {
             case "register" -> createMessage("欢迎注册我们的网站",
                     "您的邮件注册验证码为:" + code + ",有效时间为3分钟，请勿向他人泄露验证码。", email);
             case "reset" -> createMessage("您的密码重置邮件",
                     "您好，您正在进行密码重置操作，验证码:" + code + ",有效时间为3分钟，请勿向他人泄露验证码。", email);
+            case "modify" -> createMessage("您的邮件修改验证邮件",
+                    "您好，您正在绑定新的电子邮件地址，验证码：" + code + "，有效时间为3分钟，请勿向他人泄露验证码。", email);
             default -> null;
         };
         if (message == null) return;

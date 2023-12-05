@@ -1,10 +1,11 @@
 package com.example.controller;
 
 import com.example.entity.RestBean;
-import com.example.entity.vo.request.ConfirmResetVo;
-import com.example.entity.vo.request.EmailRegisterVo;
-import com.example.entity.vo.request.EmailResetVo;
+import com.example.entity.vo.request.ConfirmResetVO;
+import com.example.entity.vo.request.EmailRegisterVO;
+import com.example.entity.vo.request.EmailResetVO;
 import com.example.service.AccountService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,41 +24,82 @@ import java.util.function.Supplier;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthorizeController {
-
     @Resource
     AccountService accountService;
 
+    /**
+     * 请求邮件验证码
+     *
+     * @param email   邮件地址
+     * @param type    类型
+     * @param request 请求
+     * @return 是否成功
+     */
     @GetMapping("/ask-code")
+    @Operation(summary = "请求邮件验证码")
     public RestBean<Void> askVerifyCode(@RequestParam @Email String email,
-                                        @RequestParam @Pattern(regexp = "(register|reset)") String type,
+                                        @RequestParam @Pattern(regexp = "(register|reset|modify)") String type,
                                         HttpServletRequest request) {
         return this.messageHandle(() ->
-                accountService.registerEmailVerifyCode(type, email, request.getRemoteAddr()));
-
+                accountService.registerEmailVerifyCode(type, String.valueOf(email), request.getRemoteAddr()));
     }
 
+    /**
+     * 进行用户注册操作，先请求邮件验证码
+     *
+     * @param vo 注册信息
+     * @return 是否请求验证码成功
+     */
     @PostMapping("/register")
-    public RestBean<Void> register(@RequestBody @Valid EmailRegisterVo vo) {
+    @Operation(summary = "用户注册操作")
+    public RestBean<Void> register(@RequestBody @Valid EmailRegisterVO vo) {
         return this.messageHandle(() ->
                 accountService.registerEmailAccount(vo));
     }
 
+    /**
+     * 执行密码重置操作，检查验证码是否正确
+     *
+     * @param confirmResetVo 密码重置信息
+     * @return 是否操作成功
+     */
     @PostMapping("/reset-confirm")
-    public RestBean<Void> resetConfirm(@RequestBody @Valid ConfirmResetVo confirmResetVo) {
-        return this.messageHandle(confirmResetVo, accountService::resetPasswordConfirm);
+    @Operation(summary = "密码重置确认")
+    public RestBean<Void> resetConfirm(@RequestBody @Valid ConfirmResetVO confirmResetVo) {
+        return this.messageHandle(
+                () -> accountService.resetPasswordConfirm(confirmResetVo)
+        );
     }
 
+    /**
+     * 重置密码操作
+     *
+     * @param emailResetVo 密码重置信息
+     * @return 是否操作成功
+     */
     @PostMapping("/reset-password")
-    public RestBean<Void> resetConfirm(@RequestBody @Valid EmailResetVo emailResetVo) {
-        return this.messageHandle(emailResetVo, accountService::resetPassword);
+    @Operation(summary = "密码重置操作")
+    public RestBean<Void> resetConfirm(@RequestBody @Valid EmailResetVO emailResetVo) {
+        return this.messageHandle(
+                () -> accountService.resetPassword(emailResetVo)
+        );
     }
 
-    private <T> RestBean<Void> messageHandle(T vo, Function<T, String> function) {
-        return messageHandle(() -> function.apply(vo));
-    }
 
-    private RestBean<Void> messageHandle(Supplier<String> action) {
-        String msg = action.get();
-        return msg == null ? RestBean.success() : RestBean.failure(400, msg);
+
+    /**
+     * 针对返回值为String的方法进行统一处理
+     *
+     * @param action 具体操作
+     * @param <T> 响应结果类型
+     * @return 响应结果
+     */
+    private <T> RestBean<T> messageHandle(Supplier<String> action) {
+        String message = action.get();
+        if (message == null)
+            return RestBean.success();
+        else
+            return RestBean.failure(400, message);
+
     }
 }

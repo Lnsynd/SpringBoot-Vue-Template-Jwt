@@ -8,7 +8,7 @@ import org.hibernate.validator.constraints.Length;
  * Created by 刘千山 on 2023/8/14/014-15:02
  */
 @Data
-public class EmailResetVo {
+public class EmailResetVO {
 
     @Email
     String email;

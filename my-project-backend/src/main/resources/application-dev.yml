@@ -1,0 +1,37 @@
+spring:
+  mail:
+    host: smtp.qq.com
+    username: 2034215871@qq.com
+    password: wknachcqnotseeai
+  rabbitmq:
+    addresses: localhost
+    username: admin
+    password: admin
+    virtual-host: /
+  security:
+    filter:
+      order: -100
+    jwt:
+      key: lqs
+      expire: 72
+      limit:
+        base: 10
+        upgrade: 300
+        frequency: 30
+  web:
+    verify:
+      mail-limit: 60
+    flow:
+      period: 3
+      limit: 50
+      block: 30
+  datasource:
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/my-project
+springdoc:
+  paths-to-match: /api/**
+  swagger-ui:
+    operations-sorter: alpha
+

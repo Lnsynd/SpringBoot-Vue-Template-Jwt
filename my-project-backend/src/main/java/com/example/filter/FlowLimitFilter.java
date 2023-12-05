@@ -2,6 +2,7 @@ package com.example.filter;
 
 import com.example.entity.RestBean;
 import com.example.utils.Const;
+import com.example.utils.FlowUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -10,6 +11,8 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
@@ -23,12 +26,26 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by 刘千山 on 2023/8/14/014-17:29
  */
+@Slf4j
 @Component
 @Order(Const.ORDER_LIMIT)
 public class FlowLimitFilter extends HttpFilter {
 
     @Resource
     StringRedisTemplate stringRedisTemplate;
+
+    @Resource
+    FlowUtils utils;
+
+    //指定时间内最大请求次数限制
+    @Value("${spring.web.flow.limit}")
+    int limit;
+    //计数时间周期
+    @Value("${spring.web.flow.period}")
+    int period;
+    //超出请求限制封禁时间
+    @Value("${spring.web.flow.block}")
+    int block;
 
     @Override
     protected void doFilter(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
@@ -38,7 +55,6 @@ public class FlowLimitFilter extends HttpFilter {
         } else {
             this.writeBlockMessage(response);
         }
-
     }
 
     /***
@@ -50,25 +66,18 @@ public class FlowLimitFilter extends HttpFilter {
         response.getWriter().write(RestBean.forbidden("操作频繁，请稍后再试").asJsonString());
     }
 
+    /**
+     *
+     * @param ip 地址
+     * @return false代表该ip已经被封禁，Redis中存在该值
+     */
     private boolean tryCount(String ip) {
         synchronized (ip.intern()) {
-            if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(Const.FLOW_LIMIT_BLOCK + ip))) {
+            if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(Const.FLOW_LIMIT_BLOCK + ip)))
                 return false;
-            }
-            return this.limitPeriodCheck(ip);
+            String counterKey = Const.FLOW_LIMIT_COUNTER + ip;
+            String blockKey = Const.FLOW_LIMIT_BLOCK + ip;
+            return utils.limitPeriodCheck(counterKey, blockKey, block, limit, period);
         }
-    }
-
-    private boolean limitPeriodCheck(String ip) {
-        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(Const.FLOW_LIMIT_COUNTER + ip))) {
-            Long increment = Optional.ofNullable(stringRedisTemplate.opsForValue().increment(Const.VERIFY_EMAIL_LIMIT + ip)).orElse(0L);
-            if (increment >= 10) {
-                stringRedisTemplate.opsForValue().set(Const.FLOW_LIMIT_BLOCK + ip, "", 30, TimeUnit.SECONDS);
-                return false;
-            }
-        } else {
-            stringRedisTemplate.opsForValue().set(Const.VERIFY_EMAIL_LIMIT + ip, "1", 3, TimeUnit.SECONDS);
-        }
-        return true;
     }
 }

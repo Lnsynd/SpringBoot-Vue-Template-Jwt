@@ -9,7 +9,7 @@ import java.util.Date;
  * Created by 刘千山 on 2023/8/8/008-21:19
  */
 @Data
-public class AuthorizeVo {
+public class AuthorizeVO {
     String username;
     String role;
     String token;
