@@ -30,6 +30,11 @@ spring:
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/my-project
+  minio:
+    endpoint: 'http://localhost:9000'
+    username: 'minioadmin'
+    password: 'minioadmin'
+
 springdoc:
   paths-to-match: /api/**
   swagger-ui:
