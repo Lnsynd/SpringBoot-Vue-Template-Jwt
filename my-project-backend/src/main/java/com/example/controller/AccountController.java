@@ -15,6 +15,7 @@ import com.example.utils.Const;
 import com.example.entity.RestBean;
 import com.example.entity.vo.response.AccountVO;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 
@@ -85,6 +86,12 @@ public class AccountController {
         return RestBean.success(privacyService.accountPrivacy(id).asViewObject(AccountPrivacyVO.class));
     }
 
+
+    @GetMapping("/ip")
+    public RestBean<String> getIP(HttpServletRequest request){
+        String remoteAddr = request.getRemoteAddr();
+        return RestBean.success(remoteAddr);
+    }
 
     /**
      * 针对返回值为String的方法进行统一处理
