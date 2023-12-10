@@ -34,6 +34,8 @@ spring:
     endpoint: 'http://localhost:9000'
     username: 'minioadmin'
     password: 'minioadmin'
+  weather:
+    key: f10050255b534e5981e2590dea2a0c89
 
 springdoc:
   paths-to-match: /api/**
