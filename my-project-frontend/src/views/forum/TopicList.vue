@@ -4,19 +4,46 @@
 import LightCard from "@/components/LightCard.vue";
 import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
-import {computed} from "vue";
+import {computed, reactive} from "vue";
 import {get} from "@/net";
 import {useStore} from "@/store";
+import {ElMessage} from "element-plus";
 
 const today = computed(() => {
   const date = new Date()
   // 日期有问题
-  return `${date.getFullYear()}年${date.getMonth()}月${date.getDay()}日`
+  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
 })
 
 const store = useStore()
 get('api/user/ip', (data) => {
   store.ip = data
+})
+
+const weather = reactive({
+  location: {},
+  now: {},
+  hourly: [],
+  success: false
+})
+
+navigator.geolocation.getCurrentPosition(position => {
+  const longitude = position.coords.longitude
+  const latitude = position.coords.latitude
+  get(`/api/forum/weather?longitude=${longitude}&latitude=${latitude}`, (data) => {
+    Object.assign(weather, data)
+    weather.success = true
+  })
+}, error => {
+  console.log(error)
+  ElMessage.warning("位置信息获取超时，请检查网络设置")
+  get('/api/forum/weather?longitude=116.40529&latitude=39.90499', data => {
+    Object.assign(weather, data)
+    weather.success = true
+  })
+}, {
+  timeout: 300,
+  enableHighAccuracy: true
 })
 </script>
 
@@ -65,7 +92,7 @@ get('api/user/ip', (data) => {
             天气信息
           </div>
           <el-divider style="margin: 10px 0"/>
-          <weather/>
+          <weather :data="weather"/>
         </light-card>
         <light-card style="margin-top: 10px">
           <div class="info-text">
