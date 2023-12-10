@@ -26,7 +26,7 @@
             <div>{{ store.user.email }}</div>
           </div>
           <el-dropdown>
-            <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"/>
+            <el-avatar :src="store.avatarUrl"/>
             <template #dropdown>
               <el-dropdown-item>
                 <el-icon>
@@ -66,7 +66,7 @@
                   </el-icon>
                   <span><b>校园论坛</b></span>
                 </template>
-                <el-menu-item index="1-1">
+                <el-menu-item index="/index">
                   <template #title>
                     <el-icon>
                       <ChatDotSquare/>

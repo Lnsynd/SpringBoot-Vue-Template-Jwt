@@ -50,7 +50,7 @@ function userLogin() {
             </el-input>
           </el-form-item>
           <el-form-item prop="password">
-            <el-input v-model="form.password" maxlength="10" type="password" placeholder="密码">
+            <el-input v-model="form.password" maxlength="10" type="password" placeholder="密码" show-password>
               <template #prefix>
                 <el-icon>
                   <Lock/>

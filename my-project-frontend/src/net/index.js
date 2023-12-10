@@ -113,4 +113,4 @@ function logout(success, failure = defaultFailure) {
     }, failure)
 }
 
-export {login, logout, post, get, authorized}
+export {login, logout, post, get, authorized,accessHeader}
