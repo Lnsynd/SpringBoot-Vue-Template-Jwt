@@ -4,10 +4,11 @@
 import LightCard from "@/components/LightCard.vue";
 import {Calendar, CollectionTag, EditPen, Link} from "@element-plus/icons-vue";
 import Weather from "@/components/Weather.vue";
-import {computed, reactive} from "vue";
+import {computed, reactive, ref} from "vue";
 import {get} from "@/net";
 import {useStore} from "@/store";
 import {ElMessage} from "element-plus";
+import TopicEditor from "@/components/TopicEditor.vue";
 
 const today = computed(() => {
   const date = new Date()
@@ -26,6 +27,8 @@ const weather = reactive({
   hourly: [],
   success: false
 })
+
+const editor = ref(false)
 
 navigator.geolocation.getCurrentPosition(position => {
   const longitude = position.coords.longitude
@@ -51,7 +54,7 @@ navigator.geolocation.getCurrentPosition(position => {
   <div style="display: flex;margin: 20px auto;gap: 20px;max-width: 1100px">
     <div style="flex: 1">
       <light-card>
-        <div class="create-topic">
+        <div class="create-topic" @click="editor=true">
           <el-icon>
             <EditPen/>
           </el-icon>
@@ -120,6 +123,7 @@ navigator.geolocation.getCurrentPosition(position => {
         </div>
       </div>
     </div>
+    <topic-editor :show="editor" @close="editor = false"/>
   </div>
 </template>
 
