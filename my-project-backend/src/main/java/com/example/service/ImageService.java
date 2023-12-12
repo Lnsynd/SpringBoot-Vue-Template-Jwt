@@ -1,6 +1,7 @@
 package com.example.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.example.entity.dto.StoreImage;
 import io.minio.errors.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -12,7 +13,9 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Created by 刘千山 on 2023/12/7/007-22:14
  */
-public interface ImageService {
+public interface ImageService extends IService<StoreImage> {
     String uploadAvatar(MultipartFile file,int id) throws IOException;
     void fetchImageFromMinio(OutputStream outputStream,String imagePath) throws ServerException, InsufficientDataException, ErrorResponseException, IOException, NoSuchAlgorithmException, InvalidKeyException, InvalidResponseException, XmlParserException, InternalException;
+
+    String uploadImage(MultipartFile file, int id) throws IOException;
 }

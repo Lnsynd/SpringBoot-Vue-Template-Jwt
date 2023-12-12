@@ -17,6 +17,8 @@ public class FlowUtils {
     @Resource
     StringRedisTemplate template;
 
+    private static final LimitAction defaultAction = overclock -> !overclock;
+
     /**
      * 针对于单次频率限制，请求成功后，在冷却时间内不得再次进行请求，如3秒内不能再次发起请求
      * @param key 键
@@ -24,7 +26,7 @@ public class FlowUtils {
      * @return 是否通过限流检查
      */
     public boolean limitOnceCheck(String key, int blockTime){
-        return this.internalCheck(key, 1, blockTime, (overclock) -> false);
+        return this.internalCheck(key, 1, blockTime, defaultAction);
     }
 
     /**
@@ -85,5 +87,17 @@ public class FlowUtils {
      */
     private interface LimitAction {
         boolean run(boolean overclock);
+    }
+
+
+    /**
+     * 针对在period内多次请求，进行限制
+     * @param counterKey 计数key
+     * @param frequency 频率
+     * @param period 计数的周期
+     * @return 是否通过限流检查
+     */
+    public boolean limitPeriodCounterCheck(String counterKey,int frequency,int period){
+        return this.internalCheck(counterKey,frequency,period,defaultAction);
     }
 }

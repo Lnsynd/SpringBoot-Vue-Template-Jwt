@@ -4,6 +4,7 @@ import com.alibaba.fastjson2.JSONArray;
 import com.alibaba.fastjson2.JSONObject;
 import com.example.entity.vo.response.WeatherVO;
 import com.example.service.WeatherService;
+import com.example.utils.Const;
 import jakarta.annotation.Resource;
 import org.simpleframework.xml.Root;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,7 +48,7 @@ public class WeatherServiceImpl implements WeatherService {
         JSONObject location = geo.getJSONArray("location").getJSONObject(0);
         // 地区区划id
         int id = location.getInteger("id");
-        String key = "weather:" + id;
+        String key = Const.FORUM_WEATHER_CACHE + id;
         String cache = template.opsForValue().get("key");
         if (cache != null) {
             return JSONObject.parseObject(cache).to(WeatherVO.class);
