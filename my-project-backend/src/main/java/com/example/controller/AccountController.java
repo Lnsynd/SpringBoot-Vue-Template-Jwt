@@ -14,6 +14,7 @@ import com.example.service.AccountService;
 import com.example.utils.Const;
 import com.example.entity.RestBean;
 import com.example.entity.vo.response.AccountVO;
+import com.example.utils.ControllerUtils;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -37,6 +38,9 @@ public class AccountController {
 
     @Resource
     AccountPrivacyService privacyService;
+
+    @Resource
+    ControllerUtils controllerUtils;
 
     @GetMapping("/info")
     public RestBean<AccountVO> info(@RequestAttribute(Const.ATTR_USER_ID) int id) {
@@ -71,7 +75,7 @@ public class AccountController {
     @PostMapping("/change-password")
     public RestBean<Void> changePassword(@RequestAttribute(Const.ATTR_USER_ID) int id,
                                          @RequestBody @Valid ChangePasswordVO vo) {
-        return this.messageHandle(() -> accountService.changePassword(id, vo));
+        return controllerUtils.messageHandle(() -> accountService.changePassword(id, vo));
     }
 
     @PostMapping("/save-privacy")
@@ -93,19 +97,5 @@ public class AccountController {
         return RestBean.success(remoteAddr);
     }
 
-    /**
-     * 针对返回值为String的方法进行统一处理
-     *
-     * @param action 具体操作
-     * @param <T>    响应结果类型
-     * @return 响应结果
-     */
-    private <T> RestBean<T> messageHandle(Supplier<String> action) {
-        String message = action.get();
-        if (message == null)
-            return RestBean.success();
-        else
-            return RestBean.failure(400, message);
 
-    }
 }

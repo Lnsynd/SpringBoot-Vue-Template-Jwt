@@ -5,6 +5,7 @@ import com.example.entity.vo.request.ConfirmResetVO;
 import com.example.entity.vo.request.EmailRegisterVO;
 import com.example.entity.vo.request.EmailResetVO;
 import com.example.service.AccountService;
+import com.example.utils.ControllerUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -27,6 +28,9 @@ public class AuthorizeController {
     @Resource
     AccountService accountService;
 
+    @Resource
+    ControllerUtils controllerUtils;
+
     /**
      * 请求邮件验证码
      *
@@ -40,7 +44,7 @@ public class AuthorizeController {
     public RestBean<Void> askVerifyCode(@RequestParam @Email String email,
                                         @RequestParam @Pattern(regexp = "(register|reset|modify)") String type,
                                         HttpServletRequest request) {
-        return this.messageHandle(() ->
+        return controllerUtils.messageHandle(() ->
                 accountService.registerEmailVerifyCode(type, String.valueOf(email), request.getRemoteAddr()));
     }
 
@@ -53,7 +57,7 @@ public class AuthorizeController {
     @PostMapping("/register")
     @Operation(summary = "用户注册操作")
     public RestBean<Void> register(@RequestBody @Valid EmailRegisterVO vo) {
-        return this.messageHandle(() ->
+        return controllerUtils.messageHandle(() ->
                 accountService.registerEmailAccount(vo));
     }
 
@@ -66,7 +70,7 @@ public class AuthorizeController {
     @PostMapping("/reset-confirm")
     @Operation(summary = "密码重置确认")
     public RestBean<Void> resetConfirm(@RequestBody @Valid ConfirmResetVO confirmResetVo) {
-        return this.messageHandle(
+        return controllerUtils.messageHandle(
                 () -> accountService.resetPasswordConfirm(confirmResetVo)
         );
     }
@@ -80,26 +84,11 @@ public class AuthorizeController {
     @PostMapping("/reset-password")
     @Operation(summary = "密码重置操作")
     public RestBean<Void> resetConfirm(@RequestBody @Valid EmailResetVO emailResetVo) {
-        return this.messageHandle(
+        return controllerUtils.messageHandle(
                 () -> accountService.resetPassword(emailResetVo)
         );
     }
 
 
 
-    /**
-     * 针对返回值为String的方法进行统一处理
-     *
-     * @param action 具体操作
-     * @param <T> 响应结果类型
-     * @return 响应结果
-     */
-    private <T> RestBean<T> messageHandle(Supplier<String> action) {
-        String message = action.get();
-        if (message == null)
-            return RestBean.success();
-        else
-            return RestBean.failure(400, message);
-
-    }
 }
