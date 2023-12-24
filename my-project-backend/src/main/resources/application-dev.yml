@@ -36,7 +36,9 @@ spring:
     password: 'minioadmin'
   weather:
     key: f10050255b534e5981e2590dea2a0c89
-
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 springdoc:
   paths-to-match: /api/**
   swagger-ui:

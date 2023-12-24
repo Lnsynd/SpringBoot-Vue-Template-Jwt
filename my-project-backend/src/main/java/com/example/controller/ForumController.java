@@ -2,6 +2,8 @@ package com.example.controller;
 
 import com.example.entity.RestBean;
 import com.example.entity.vo.request.TopicCreateVO;
+import com.example.entity.vo.response.TopicPreviewVO;
+import com.example.entity.vo.response.TopicTopVO;
 import com.example.entity.vo.response.TopicTypeVO;
 import com.example.entity.vo.response.WeatherVO;
 import com.example.service.TopicService;
@@ -10,6 +12,7 @@ import com.example.utils.Const;
 import com.example.utils.ControllerUtils;
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,5 +49,16 @@ public class ForumController {
     public RestBean<Void> createTopic(@Valid @RequestBody TopicCreateVO vo,
                                       @RequestAttribute(Const.ATTR_USER_ID) int id) {
         return controllerUtils.messageHandle(()->topicService.createTopic(id,vo));
+    }
+
+    @GetMapping("/list-topic")
+    public RestBean<List<TopicPreviewVO>> listTopic(@RequestParam @Min(0) int page,
+                                                    @RequestParam @Min(0) int type){
+        return RestBean.success(topicService.listTopicByPage(page,type));
+    }
+
+    @GetMapping("/top-topic")
+    public RestBean<List<TopicTopVO>> topTopic(){
+        return RestBean.success(topicService.listTopTopics());
     }
 }
