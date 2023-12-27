@@ -27,6 +27,4 @@ public class Account implements BaseData {
     Date registerTime;
 
 
-
-
 }
