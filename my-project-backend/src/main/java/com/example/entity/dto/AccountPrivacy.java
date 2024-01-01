@@ -33,7 +33,7 @@ public class AccountPrivacy implements BaseData {
         Field[] fields = this.getClass().getDeclaredFields();
         for (Field field : fields) {
             try {
-                if(field.getType().equals(Boolean.class) && !field.getBoolean(this)){
+                if(field.getType().equals(boolean.class) && !field.getBoolean(this)){
                     strings.add(field.getName());
                 }
             }catch (IllegalAccessException e){
