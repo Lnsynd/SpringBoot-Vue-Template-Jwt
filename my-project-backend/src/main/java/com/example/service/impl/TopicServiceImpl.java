@@ -21,9 +21,12 @@ import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import net.sf.jsqlparser.statement.select.Top;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -46,6 +49,9 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
     @Resource
     AccountPrivacyMapper accountPrivacyMapper;
+
+    @Resource
+    StringRedisTemplate stringRedisTemplate;
 
     @Resource
     CacheUtils cacheUtils;
@@ -141,19 +147,67 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
 
         TopicDetailVO topicDetailVO = new TopicDetailVO();
         Topic topic = baseMapper.selectById(tid);
-        BeanUtils.copyProperties(topic,topicDetailVO);
+        BeanUtils.copyProperties(topic, topicDetailVO);
         TopicDetailVO.User user = new TopicDetailVO.User();
-        topicDetailVO.setUser(this.fillUserDetailsByPrivacy(user,topic.getUid()));
+        topicDetailVO.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
         return topicDetailVO;
     }
 
-    private <T> T fillUserDetailsByPrivacy(T t,int uid){
+    @Override
+    public void interact(Interact interact, boolean state) {
+        String type = interact.getType();
+        synchronized (type.intern()) {
+            stringRedisTemplate.opsForHash().put(type, interact.toKey(), Boolean.toString(state));
+            this.saveInteractSchedule(type);
+        }
+    }
+
+    private final Map<String, Boolean> state = new HashMap<>();
+    ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
+
+    private void saveInteractSchedule(String type) {
+        if (!state.getOrDefault(type, false)) {
+            state.put(type, true);
+            service.schedule(() -> {
+                try {
+                    this.saveInteract(type);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
+                state.put(type, false);
+            },3,TimeUnit.SECONDS);
+        }
+    }
+
+    private void saveInteract(String type) {
+        synchronized (type.intern()) {
+            List<Interact> check = new ArrayList<>();
+            List<Interact> uncheck = new ArrayList<>();
+            stringRedisTemplate.opsForHash().entries(type).forEach((k, v) -> {
+                if (Boolean.parseBoolean(v.toString())) {
+                    check.add(Interact.parseInteract(k.toString(), type));
+                } else {
+                    uncheck.add(Interact.parseInteract(k.toString(), type));
+                }
+            });
+            if (!check.isEmpty()) {
+                baseMapper.addInteract(check, type);
+            }
+            if (!uncheck.isEmpty()) {
+                baseMapper.deleteInteract(uncheck, type);
+            }
+            stringRedisTemplate.delete(type);
+        }
+    }
+
+    private <T> T fillUserDetailsByPrivacy(T t, int uid) {
         Account account = accountMapper.selectById(uid);
         AccountDetails accountDetails = accountDetailsMapper.selectById(uid);
         AccountPrivacy privacy = accountPrivacyMapper.selectById(uid);
         String[] hiddenFields = privacy.hiddenFields();
-        BeanUtils.copyProperties(account,t,hiddenFields);
-        BeanUtils.copyProperties(accountDetails,t,hiddenFields);
+        BeanUtils.copyProperties(account, t, hiddenFields);
+        BeanUtils.copyProperties(accountDetails, t, hiddenFields);
         return t;
     }
 
