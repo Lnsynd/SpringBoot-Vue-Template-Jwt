@@ -3,17 +3,21 @@ import {useRoute} from "vue-router";
 import {get} from "@/net";
 import axios from "axios";
 import {reactive, computed} from "vue";
-import {Female, Male} from "@element-plus/icons-vue";
+import {CircleCheck, Female, Male, Star} from "@element-plus/icons-vue";
 import {QuillDeltaToHtmlConverter} from "quill-delta-to-html";
 import Card from "@/components/Card.vue";
 import {ArrowLeft} from "@element-plus/icons-vue/global";
 import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
+import InteractButton from "@/components/InteractButton.vue";
+import {ElMessage} from "element-plus";
 
 const route = useRoute()
 
 const topic = reactive({
   data: null,
+  like: false,
+  collect: false,
   comments: []
 })
 
@@ -28,6 +32,18 @@ const content = computed(() => {
   const convertor = new QuillDeltaToHtmlConverter(ops, {inlineStyles: true})
   return convertor.convert();
 })
+
+function interact(type, message) {
+  get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic[type]}`, () => {
+    topic[type] = !topic[type]
+    if(topic[type]){
+      ElMessage.success(`${message}成功!`)
+    }
+    else{
+      ElMessage.success(`已取消${message}!`)
+    }
+  })
+}
 </script>
 
 <template>
@@ -73,6 +89,23 @@ const content = computed(() => {
       </div>
       <div class="topic-main-right">
         <div class="topic-content" v-html="content"></div>
+        <div style="text-align: right;margin-top: 30px;">
+          <interact-button name="点个赞" check-name="已点赞"
+                           :check="topic.like"
+                           @check="interact('like','点赞')"
+          >
+            <el-icon>
+              <CircleCheck/>
+            </el-icon>
+          </interact-button>
+          <interact-button name="收藏" check-name="已收藏" :check="topic.collect"
+                           @check="interact('collect','收藏')"
+                           style="margin-left: 20px;">
+            <el-icon>
+              <Star/>
+            </el-icon>
+          </interact-button>
+        </div>
       </div>
     </div>
     <div>
