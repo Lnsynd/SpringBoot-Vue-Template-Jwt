@@ -124,6 +124,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         TopicPreviewVO vo = new TopicPreviewVO();
         BeanUtils.copyProperties(accountMapper.selectById(topic.getUid()), vo);
         BeanUtils.copyProperties(topic, vo);
+        vo.setLike(baseMapper.interactCount(topic.getId(),"like"));
+        vo.setCollect(baseMapper.interactCount(topic.getId(),"collect"));
         List<String> images = new ArrayList<>();
         StringBuilder previewText = new StringBuilder();
         JSONArray ops = JSONObject.parseObject(topic.getContent()).getJSONArray("ops");
@@ -148,6 +150,11 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         TopicDetailVO topicDetailVO = new TopicDetailVO();
         Topic topic = baseMapper.selectById(tid);
         BeanUtils.copyProperties(topic, topicDetailVO);
+        TopicDetailVO.Interact interact = new TopicDetailVO.Interact(
+                hasInteract(tid, topic.getUid(), "like"),
+                hasInteract(tid, topic.getUid(), "collect")
+        );
+        topicDetailVO.setInteract(interact);
         TopicDetailVO.User user = new TopicDetailVO.User();
         topicDetailVO.setUser(this.fillUserDetailsByPrivacy(user, topic.getUid()));
         return topicDetailVO;
@@ -162,6 +169,14 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }
     }
 
+    private boolean hasInteract(int tid, int uid, String type) {
+        String key = tid + ":" + uid;
+        if (stringRedisTemplate.opsForHash().hasKey(type, key)) {
+            return Boolean.parseBoolean(stringRedisTemplate.opsForHash().entries(type).get(key).toString());
+        }
+        return baseMapper.userInteractCount(tid, uid, type) > 0;
+    }
+
     private final Map<String, Boolean> state = new HashMap<>();
     ScheduledExecutorService service = Executors.newScheduledThreadPool(2);
 
@@ -171,12 +186,12 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             service.schedule(() -> {
                 try {
                     this.saveInteract(type);
-                }catch (Exception e){
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
 
                 state.put(type, false);
-            },3,TimeUnit.SECONDS);
+            }, 3, TimeUnit.SECONDS);
         }
     }
 

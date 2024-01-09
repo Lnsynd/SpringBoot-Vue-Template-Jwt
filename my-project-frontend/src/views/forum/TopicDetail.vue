@@ -25,6 +25,8 @@ const tid = route.params.tid
 
 get(`/api/forum/topic?tid=${tid}`, data => {
   topic.data = data
+  topic.like = data.interact.like
+  topic.collect = data.interact.collect
 })
 
 const content = computed(() => {
@@ -34,12 +36,11 @@ const content = computed(() => {
 })
 
 function interact(type, message) {
-  get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic[type]}`, () => {
+  get(`/api/forum/interact?tid=${tid}&type=${type}&state=${!topic.type}`, () => {
     topic[type] = !topic[type]
-    if(topic[type]){
+    if (topic.type) {
       ElMessage.success(`${message}成功!`)
-    }
-    else{
+    } else {
       ElMessage.success(`已取消${message}!`)
     }
   })
@@ -89,6 +90,10 @@ function interact(type, message) {
       </div>
       <div class="topic-main-right">
         <div class="topic-content" v-html="content"></div>
+        <el-divider/>
+        <div style="font-size: 13px;color: gray;text-align: center;">
+          <div>发帖时间:{{new Date(topic.data.time).toLocaleString()}}</div>
+        </div>
         <div style="text-align: right;margin-top: 30px;">
           <interact-button name="点个赞" check-name="已点赞"
                            :check="topic.like"
