@@ -120,6 +120,15 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
         }).toList();
     }
 
+    @Override
+    public List<TopicPreviewVO> listTopicsCollects(int uid) {
+        return baseMapper.collectTopics(uid).stream().map(topic -> {
+            TopicPreviewVO vo = new TopicPreviewVO();
+            BeanUtils.copyProperties(topic,vo);
+            return vo;
+        }).toList();
+    }
+
     private TopicPreviewVO resolveToPreview(Topic topic) {
         TopicPreviewVO vo = new TopicPreviewVO();
         BeanUtils.copyProperties(accountMapper.selectById(topic.getUid()), vo);
@@ -168,6 +177,8 @@ public class TopicServiceImpl extends ServiceImpl<TopicMapper, Topic> implements
             this.saveInteractSchedule(type);
         }
     }
+
+
 
     private boolean hasInteract(int tid, int uid, String type) {
         String key = tid + ":" + uid;
