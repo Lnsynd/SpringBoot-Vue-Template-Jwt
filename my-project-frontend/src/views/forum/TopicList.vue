@@ -3,12 +3,13 @@
 
 import LightCard from "@/components/LightCard.vue";
 import {
+  ArrowRight, ArrowRightBold,
   Calendar, CircleCheck,
   Clock,
   CollectionTag, Compass,
   Document,
   Edit,
-  EditPen,
+  EditPen, FolderOpened,
   Link,
   Microphone,
   Picture, Star
@@ -23,6 +24,7 @@ import axios from "axios";
 import ColorDot from "@/components/ColorDot.vue";
 import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
+import TopicCollectList from "@/components/TopicCollectList.vue";
 
 
 const store = useStore()
@@ -109,6 +111,8 @@ navigator.geolocation.getCurrentPosition(position => {
   enableHighAccuracy: true
 })
 
+
+const collects = ref(false)
 </script>
 
 <template>
@@ -202,6 +206,15 @@ navigator.geolocation.getCurrentPosition(position => {
     <div style="width: 300px;">
       <div style="position: sticky;top: 20px">
         <light-card>
+          <div class="collect-list-button" @click="collects = true">
+            <span>
+              <el-icon><FolderOpened/></el-icon>
+              查看我的收藏
+            </span>
+            <el-icon style="transform: translateY(3px)"><ArrowRightBold/></el-icon>
+          </div>
+        </light-card>
+        <light-card style="margin-top: 10px;">
           <div style="font-weight: bold;">
             <el-icon>
               <CollectionTag/>
@@ -253,10 +266,22 @@ navigator.geolocation.getCurrentPosition(position => {
       </div>
     </div>
     <topic-editor :show="editor" @close="editor = false" @success="onTopicCreate"/>
+    <topic-collect-list :show="collects" @close="collects = false"></topic-collect-list>
   </div>
 </template>
 
 <style lang="less" scoped>
+.collect-list-button{
+  font-size: 14px;
+  display: flex;
+  justify-content: space-between;
+  transition: .3s;
+
+  &:hover{
+    cursor: pointer;
+    opacity: 0.7;
+  }
+}
 .top-topic {
   display: flex;
 
