@@ -1,7 +1,7 @@
 <script setup>
 import {computed, reactive, ref} from "vue";
 import {Check, Document} from "@element-plus/icons-vue/global";
-import {Quill, QuillEditor} from '@vueup/vue-quill'
+import {Delta, Quill, QuillEditor} from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
 import ImageResize from "quill-image-resize-vue";
 import {ImageExtend, QuillWatch} from "quill-image-super-solution-module";
@@ -15,8 +15,37 @@ import {useStore} from "@/store";
 Quill.register('modules/imageResize', ImageResize)
 Quill.register('modules/imageExtend', ImageExtend)
 
-defineProps({
-  show: Boolean
+const props = defineProps({
+  show: Boolean,
+  defaultTitle: {
+    default: '',
+    type: String
+  },
+  defaultText: {
+    default: '',
+    type: String
+  },
+  defaultType: {
+    default: 1,
+    type: Number
+  },
+  submitButton: {
+    default: '立即发布主题  ',
+    type: String
+  },
+  submit: {
+    default: (editor, success) => {
+      post('/api/forum/create-topic', {
+        type: editor.type,
+        title: editor.title,
+        content: editor.text
+      }, () => {
+        ElMessage.success('帖子发表成功')
+        success()
+      })
+    },
+    type: Function
+  }
 })
 
 const store = useStore();
@@ -32,9 +61,13 @@ const editor = reactive({
 const editorRef = ref()
 
 function initEditor() {
-  editorRef.value.setContents('', 'user')
-  editor.title = ''
-  editor.type = null
+  if (props.defaultText) {
+    editor.text = new Delta(JSON.parse(props.defaultText))
+  } else {
+    editorRef.value.setContents('', 'user')
+  }
+  editor.title = props.defaultTitle
+  editor.type = findTypeById(props.defaultType)
 }
 
 const editorOption = {
@@ -111,17 +144,17 @@ function submitTopic() {
     ElMessage.warning('请选择一个合适的帖子类型')
     return
   }
-  post('/api/forum/create-topic', {
-    type: editor.type.id,
-    title: editor.title,
-    content: editor.text
-  }, () => {
-    ElMessage.success('帖子发表成功')
-    emit('success')
-  })
+  props.submit(editor, () => emit('success'))
 }
 
 const contentLength = computed(() => deltaToText(editor.text).length)
+
+function findTypeById(id) {
+  for (let type of store.forum.types) {
+    if (type.id === id)
+      return type
+  }
+}
 </script>
 
 <template>
@@ -177,7 +210,7 @@ const contentLength = computed(() => deltaToText(editor.text).length)
         <div style="color: gray;font-size: 12px">当前字数{{ contentLength }}</div>
         <div>
           <el-button type="success" :icon="Check" @click="submitTopic" plain>
-            立即发布
+            {{ submitButton }}
           </el-button>
         </div>
       </div>

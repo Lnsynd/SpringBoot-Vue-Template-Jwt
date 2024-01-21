@@ -1,9 +1,9 @@
 <script setup>
 import {useRoute} from "vue-router";
-import {get} from "@/net";
+import {get, post} from "@/net";
 import axios from "axios";
-import {reactive, computed} from "vue";
-import {CircleCheck, Female, Male, Star} from "@element-plus/icons-vue";
+import {reactive, computed, ref} from "vue";
+import {CircleCheck, EditPen, Female, Male, Star} from "@element-plus/icons-vue";
 import {QuillDeltaToHtmlConverter} from "quill-delta-to-html";
 import Card from "@/components/Card.vue";
 import {ArrowLeft} from "@element-plus/icons-vue/global";
@@ -11,9 +11,11 @@ import router from "@/router";
 import TopicTag from "@/components/TopicTag.vue";
 import InteractButton from "@/components/InteractButton.vue";
 import {ElMessage} from "element-plus";
+import {useStore} from "@/store";
+import TopicEditor from "@/components/TopicEditor.vue";
 
 const route = useRoute()
-
+const store = useStore()
 const topic = reactive({
   data: null,
   like: false,
@@ -22,12 +24,16 @@ const topic = reactive({
 })
 
 const tid = route.params.tid
+const edit = ref(false)
 
-get(`/api/forum/topic?tid=${tid}`, data => {
-  topic.data = data
-  topic.like = data.interact.like
-  topic.collect = data.interact.collect
-})
+const init = ()=>{
+  get(`/api/forum/topic?tid=${tid}`, data => {
+    topic.data = data
+    topic.like = data.interact.like
+    topic.collect = data.interact.collect
+  })
+}
+init()
 
 const content = computed(() => {
   const ops = JSON.parse(topic.data.content).ops
@@ -43,6 +49,19 @@ function interact(type, message) {
     } else {
       ElMessage.success(`已取消${message}!`)
     }
+  })
+}
+
+function updateTopic(editor) {
+  post('/api/forum/update-topic', {
+    id: tid,
+    type: editor.type.id,
+    title: editor.title,
+    content: editor.text
+  }, () => {
+    ElMessage.success('帖子更新成功')
+    edit.value = false
+    init()
   })
 }
 </script>
@@ -92,20 +111,26 @@ function interact(type, message) {
         <div class="topic-content" v-html="content"></div>
         <el-divider/>
         <div style="font-size: 13px;color: gray;text-align: center;">
-          <div>发帖时间:{{new Date(topic.data.time).toLocaleString()}}</div>
+          <div>发帖时间:{{ new Date(topic.data.time).toLocaleString() }}</div>
         </div>
         <div style="text-align: right;margin-top: 30px;">
+          <interact-button name="编辑" color="dodgerblue" :check="false"
+                           @check="edit = true"
+                           style="margin-right: 10px;" v-if="store.user.id === topic.data.user.id">
+            <el-icon>
+              <EditPen/>
+            </el-icon>
+          </interact-button>
           <interact-button name="点个赞" check-name="已点赞"
                            :check="topic.like"
-                           @check="interact('like','点赞')"
-          >
+                           @check="interact('like','点赞')">
             <el-icon>
               <CircleCheck/>
             </el-icon>
           </interact-button>
           <interact-button name="收藏" check-name="已收藏" :check="topic.collect"
                            @check="interact('collect','收藏')"
-                           style="margin-left: 20px;">
+                           style="margin-left: 10px;">
             <el-icon>
               <Star/>
             </el-icon>
@@ -113,9 +138,13 @@ function interact(type, message) {
         </div>
       </div>
     </div>
-    <div>
-
-    </div>
+    <topic-editor :show="edit" @close="edit = false" v-if="topic.data && store.forum.types"
+                  :default-title="topic.data.title"
+                  :default-text="topic.data.content"
+                  :default-type="topic.data.type"
+                  :submit-button="更新内容"
+                  :submit="updateTopic">
+    </topic-editor>
   </div>
 </template>
 
@@ -149,11 +178,14 @@ function interact(type, message) {
   .topic-main-right {
     width: 700px;
     padding: 10px 20px;
+    display: flex;
+    flex-direction: column;
 
     .topic-content {
       font-size: 14px;
       line-height: 22px;
       opacity: 0.8;
+      flex: 1;
     }
   }
 }
