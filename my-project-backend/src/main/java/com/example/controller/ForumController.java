@@ -2,6 +2,7 @@ package com.example.controller;
 
 import com.example.entity.RestBean;
 import com.example.entity.dto.Interact;
+import com.example.entity.vo.request.AddCommentVO;
 import com.example.entity.vo.request.TopicCreateVO;
 import com.example.entity.vo.request.TopicUpdateVO;
 import com.example.entity.vo.response.*;
@@ -67,7 +68,7 @@ public class ForumController {
     @GetMapping("/topic")
     public RestBean<TopicDetailVO> topic(@RequestParam @Min(0) int tid,
                                          @RequestAttribute(Const.ATTR_USER_ID) int uid) {
-        return RestBean.success(topicService.getTopic(tid,uid));
+        return RestBean.success(topicService.getTopic(tid, uid));
     }
 
     @GetMapping("/interact")
@@ -75,18 +76,30 @@ public class ForumController {
                                    @RequestParam @Pattern(regexp = "(like|collect)") String type,
                                    @RequestParam boolean state,
                                    @RequestAttribute(Const.ATTR_USER_ID) int id) {
-        topicService.interact(new Interact(tid,id,new Date(),type),state);
+        topicService.interact(new Interact(tid, id, new Date(), type), state);
         return RestBean.success();
     }
 
     @GetMapping("/collects")
-    public RestBean<List<TopicPreviewVO>> collects(@RequestAttribute(Const.ATTR_USER_ID) int id){
+    public RestBean<List<TopicPreviewVO>> collects(@RequestAttribute(Const.ATTR_USER_ID) int id) {
         return RestBean.success(topicService.listTopicsCollects(id));
     }
 
     @PostMapping("/update-topic")
     public RestBean<String> updateTopic(@Valid @RequestBody TopicUpdateVO vo,
-                                      @RequestAttribute(Const.ATTR_USER_ID) int uid){
-        return controllerUtils.messageHandle(() -> topicService.updateTopic(uid,vo));
+                                        @RequestAttribute(Const.ATTR_USER_ID) int uid) {
+        return controllerUtils.messageHandle(() -> topicService.updateTopic(uid, vo));
+    }
+
+    @PostMapping("/add-comment")
+    public RestBean<Void> addComment(@Valid @RequestBody AddCommentVO vo,
+                                     @RequestAttribute(Const.ATTR_USER_ID) int uid) {
+        return controllerUtils.messageHandle(()->topicService.createComment(vo,uid));
+    }
+
+    @GetMapping("/comments")
+    public RestBean<List<CommentVO>> comments(@RequestParam int tid,
+                                              @RequestParam int page){
+        return RestBean.success(topicService.comments(tid,page));
     }
 }

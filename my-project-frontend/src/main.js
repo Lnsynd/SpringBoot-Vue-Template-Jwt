@@ -5,7 +5,7 @@ import axios from "axios";
 import 'element-plus/theme-chalk/dark/css-vars.css'
 import {createPinia} from "pinia";
 import infiniteScroll from 'vue-infinite-scroll';
-
+import '@/assets/quill.css'
 
 axios.defaults.baseURL = "http://localhost:8080"
 

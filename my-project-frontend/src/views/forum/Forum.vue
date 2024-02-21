@@ -19,6 +19,7 @@ get('/api/forum/types', data => {
       </keep-alive>
     </transition>
   </router-view>
+  <el-backtop target=".main-content-page .el-scrollbar__wrap" :right="20" :bottom="70"/>
 </template>
 
 <style scoped>

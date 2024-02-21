@@ -116,7 +116,7 @@ const collects = ref(false)
 </script>
 
 <template>
-  <div style="display: flex;margin: 20px;gap: 20px;max-width: 1100px;">
+  <div style="display: flex;margin: 20px;gap: 20px;">
     <div style="flex: 1;">
       <light-card>
         <div class="create-topic" @click="editor=true">
